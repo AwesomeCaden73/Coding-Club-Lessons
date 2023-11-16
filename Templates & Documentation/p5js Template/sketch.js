@@ -26,7 +26,7 @@ class Bird {
     }
 
     flap() {
-        this.vel = -20;
+        this.vel = -15;
     }
 }
 
@@ -37,10 +37,22 @@ class Pipe {
         this.gapSize = gapSize;
     }
 
+    update() {
+        this.x -= 5;
+    }
+
+    collide(player) {
+        let radius = player.size/2;
+        if (player.x+radius >= this.x && player.x-radius <= this.x+100 && (player.y+radius >= height-(this.yGap-this.gapSize/2) || player.y-radius <= this.yGap-this.gapSize/2)) {
+            return true;            
+        }
+        return false;
+    }
+
     display() {
         fill(0,255,0);
-        rect(this.x, height-this.yGap, 100, this.yGap);
-        rect(this.x, 0, 100, this.yGap-this.gapSize);
+        rect(this.x, height-(this.yGap-this.gapSize/2), 100, this.yGap);
+        rect(this.x, 0, 100, this.yGap-this.gapSize/2);
     }
 }
 
@@ -53,7 +65,8 @@ function setup() {
     canvas.class("p5canvas");
 
     bird = new Bird(width/2, height/2, 50);
-    pipes.push(new Pipe(3*width/4, height/2, 500));
+    pipes.push(new Pipe(3*width/4, height/2, 200));
+    collided = false;
     
 }
 
@@ -63,17 +76,33 @@ function draw() {
     bird.update();
     bird.display();
 
-    for (var i = 0; i < pipes.length; i++) {
+    for (let i = pipes.length-1; i >= 0; i--) {
+        if (!collided) {
+            pipes[i].update();
+            if (pipes[i].collide(bird)) {
+                collided = true;
+            }
+        }
         pipes[i].display();
+        if (pipes[i].x < -100) {
+            pipes.splice(i, 1);
+        }
     }
+
+    if (frameCount % 100 === 0) {
+        pipes.push(new Pipe(width, height/2, 200));
+    }
+
 }
 
 function mousePressed() {
-    bird.flap();
+    if (!collided) {
+        bird.flap();
+    }
 }
 
 function keyPressed() {
-    if (keyCode === 32) {
+    if (keyCode === 32 && !collided) {
         bird.flap();
     }
 }
